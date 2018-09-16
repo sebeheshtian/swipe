@@ -32,8 +32,14 @@ class Deck extends Component {
         this.position.setValue({ x: gesture.dx, y: 0 })
       },
       onPanResponderRelease: (event, gesture) => {
+
+
         if ( gesture.dx > SWIPE_THRESHOLD ) {
-          this.forceSwipe('right');
+          if (this.state.counter === 0) {
+            this.resetPosition();
+          } else {
+            this.forceSwipe('right');
+          }
         } else if ( gesture.dx < -SWIPE_THRESHOLD ) {
           this.forceSwipe('left');
         } else {
@@ -50,15 +56,15 @@ class Deck extends Component {
       toValue: { x: (direction === 'right' ? 1.5 : -1.5) * SCREEN_WIDTH, y: 0 },
       duration: FORCE_SWIPE_DURATION,
     }).start(() => {
-      this.onSwipeComplete();
+      this.onSwipeComplete(direction);
     });
   }
 
-  onSwipeComplete = () => {
+  onSwipeComplete = (direction) => {
     this.position.setValue({ x: 0, y: 0 });
 
     this.setState(oldState => ({
-      counter: oldState.counter + 1,
+      counter: (direction === 'right' ? -1 : 1) + oldState.counter,
     }));
   }
 
@@ -108,7 +114,12 @@ class Deck extends Component {
   render() {
     return (
       <View>
-        {this.renderCards()}
+        {this.state.counter === this.props.data.length
+          ?
+            this.props.renderNoMore()
+          :
+            this.renderCards()
+        }
       </View>
     );
   }
