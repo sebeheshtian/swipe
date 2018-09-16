@@ -32,7 +32,7 @@ class App extends Component {
         </Text>
 
         <Button
-          icon={{ name: 'code' }}
+          icon={{ name: 'mirror', type: 'octicon' }}
           backgroundColor="#03A9F4"
           title="View Now!"
         />
