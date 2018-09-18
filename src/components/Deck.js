@@ -4,6 +4,7 @@ import {
   Text,
   PanResponder,
   Animated,
+  LayoutAnimation,
   Dimensions,
 } from 'react-native';
 
@@ -16,6 +17,11 @@ const SWIPE_THRESHOLD = SCREEN_WIDTH / 4;
 const FORCE_SWIPE_DURATION = 250;
 
 class Deck extends Component {
+  static defaultProps = {
+    onSwipeLeft: () => {},
+    onSwipeRight: () => {},
+  }
+
   constructor(props) {
     super(props);
 
@@ -32,16 +38,16 @@ class Deck extends Component {
         this.position.setValue({ x: gesture.dx, y: 0 })
       },
       onPanResponderRelease: (event, gesture) => {
-
-
         if ( gesture.dx > SWIPE_THRESHOLD ) {
           if (this.state.counter === 0) {
             this.resetPosition();
           } else {
+            this.props.onSwipeRight();
             this.forceSwipe('right');
           }
         } else if ( gesture.dx < -SWIPE_THRESHOLD ) {
           this.forceSwipe('left');
+          this.props.onSwipeLeft();
         } else {
           this.resetPosition();
         }
@@ -49,6 +55,10 @@ class Deck extends Component {
     });
 
     this.panResponder = panResponder;
+  }
+
+  componentWillUpdate() {
+    LayoutAnimation.linear();
   }
 
   forceSwipe = (direction) => {
@@ -63,8 +73,9 @@ class Deck extends Component {
   onSwipeComplete = (direction) => {
     this.position.setValue({ x: 0, y: 0 });
 
-    this.setState(oldState => ({
-      counter: (direction === 'right' ? -1 : 1) + oldState.counter,
+    // this.setState({ counter: this.state.counter + 1 }) DO NOT TRY THIS AT HOME!
+    this.setState(snapShot => ({
+      counter: (direction === 'right' ? -1 : 1) + snapShot.counter,
     }));
   }
 
@@ -91,10 +102,6 @@ class Deck extends Component {
 
   renderCards() {
     return this.props.data.map((item, index) => {
-      if (index < this.state.counter) {
-        return null;
-      }
-
       if (index === this.state.counter) {
         return (
           <Animated.View
@@ -105,10 +112,16 @@ class Deck extends Component {
             {this.props.renderCard(item)}
           </Animated.View>
         );
+      } else {
+        return null;
       }
-
-      return this.props.renderCard(item);
     });
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.data !== this.props.data) {
+      this.setState({ counter: 0 });
+    }
   }
 
   render() {
